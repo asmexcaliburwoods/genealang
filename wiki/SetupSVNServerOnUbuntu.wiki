@@ -1,3 +1,10 @@
 #summary Setting up SVN server on Ubuntu Linux
 
-Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here].
+Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My comments are:
+
+ * You can use jstar to edit /etc/passwd and /etc/group instead of vipw and vigr:
+
+`sudo -i
+apt-get install joe
+jstar /etc/passwd
+jstar /etc/group`
