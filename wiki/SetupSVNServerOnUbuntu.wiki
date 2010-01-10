@@ -4,7 +4,10 @@ Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-
 
  * You can use jstar to edit /etc/passwd and /etc/group instead of vipw and vigr:
 
-`sudo -i
-apt-get install joe
-jstar /etc/passwd
-jstar /etc/group`
+The following installs jstar:
+
+`sudo apt-get install joe`
+
+`sudo -i`
+`jstar /etc/passwd`
+`jstar /etc/group`
