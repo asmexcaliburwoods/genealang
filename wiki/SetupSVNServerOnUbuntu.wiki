@@ -2,12 +2,16 @@
 
 Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My comments are:
 
- * You can use jstar to edit /etc/passwd and /etc/group instead of vipw and vigr:
+You can use `jstar` editor to edit `/etc/passwd` and `/etc/group` instead of `vipw` and `vigr`.
 
-The following installs jstar:
+The following installs `jstar`:
 
 `sudo apt-get install joe`
 
+The following can be used to edit passwd and group:
+
 `sudo -i`
+
 `jstar /etc/passwd`
+
 `jstar /etc/group`
