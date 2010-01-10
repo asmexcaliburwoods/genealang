@@ -16,3 +16,9 @@ The following can be used to edit passwd and group:
 `jstar /etc/passwd`
 
 `jstar /etc/group`
+
+Remove backups after editing:
+
+`rm /etc/passwd~`
+
+`rm /etc/group~`
