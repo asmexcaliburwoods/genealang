@@ -1,4 +1,5 @@
 #summary Setting up SVN server on Ubuntu Linux
+#labels svn
 
 Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My comments are:
 
