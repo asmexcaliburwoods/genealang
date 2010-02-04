@@ -18,7 +18,7 @@ public class GenealangLibraryImplFolderLoader {
 			public String getLibraryDisplayNameLong(GenealangProxy proxy) {
 				String libName=folder.getAbsolutePath();
 				if(librarySphere!=null){
-					libName=librarySphere.getUniqueSphereLabeled("genealang.library.display.name.long");
+					libName=librarySphere.getUniqueSphereLabeled("genealang.library.display.name.long").concatenateAllContentsNoLabel(256);
 				}
 				return libName;
 			}
