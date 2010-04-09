@@ -1,17 +1,31 @@
 package egp.sphere.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import egp.sphere.model.NullSphere;
 import egp.sphere.model.Sphere;
-import egp.sphere.model.Sphere.NothingAndEverything_Exception;
+import egp.sphere.model.Sphere.LabelNotFoundException;
 
 public class NullSphereImpl implements NullSphere {
 	@Override
-	public String concatenateAllContentsNoLabel(long lengthCharactersLimit) {
+	public Sphere getUniqueSphereLabeled(String string) throws LabelNotFoundException{
+		throw new LabelNotFoundException();
+	}
+
+	@Override
+	public String concatenateAllContentsNoLabel_CharactersLengthMax(
+			int charsLengthMax) {
 		return "";
 	}
 
 	@Override
-	public Sphere getUniqueSphereLabeled(String string) throws NothingAndEverything_Exception{
-		throw new NothingAndEverything_Exception();
+	public List<Sphere> getRecursivelyAllSpheresLabeled(String label) {
+		return new ArrayList<Sphere>();
+	}
+
+	@Override
+	public List<Sphere> getChildItems() {
+		throw new UnsupportedOperationException();
 	}
 }
