@@ -1,10 +1,12 @@
 package egp.sphere.model;
 
+import java.util.List;
+
 public interface Sphere {
-	public class NoUnique_Exception extends Exception{public NoUnique_Exception() {}}
-	public class NothingAndEverything_Exception extends Exception{public NothingAndEverything_Exception() {}}
-	Sphere getUniqueSphereLabeled(String string)throws NoUnique_Exception, NothingAndEverything_Exception;
-	long INFINITY_LENGTH_CHARACTERS_LIMIT=-1L;
-	//GTD replace by more sane API call 
-	String concatenateAllContentsNoLabel(long lengthCharactersLimit);
+	public static class LabelNotFoundException extends Exception{}
+	public static class DuplicateLabelFoundException extends Exception{}
+	List<Sphere> getChildItems();
+	Sphere getUniqueSphereLabeled(String string) throws LabelNotFoundException, DuplicateLabelFoundException;
+	List<Sphere> getRecursivelyAllSpheresLabeled(String label);
+	String concatenateAllContentsNoLabel_CharactersLengthMax(int charsLengthMax);
 }

@@ -1,20 +1,41 @@
 package egp.genealang.proxy.impl;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import javax.swing.tree.TreeNode;
 
+import egp.genealang.model.GenealangLibrary;
 import egp.genealang.proxy.GenealangLibraryLink;
 import egp.genealang.proxy.GenealangProxy;
 import egp.sphere.impl.SphereImpl;
+import egp.sphere.model.NullSphere;
+import egp.sphere.model.Sphere;
+import gtd.GTD;
 
 public class GenealangLibraryLinkImpl extends SphereImpl implements GenealangLibraryLink{
-	private String displayNameLong;
+	private final String displayNameLong;
+	private final GenealangLibrary library;
+	private final List<TreeNode> treeNodes;
+	private final File folder;
 	
-	public GenealangLibraryLinkImpl(String displayNameLong) {
+	public GenealangLibraryLinkImpl(String displayNameLong, GenealangLibrary lib, File folder) {
 		super();
-		if(displayNameLong==null)throw new NullPointerException("displayNameLong==null");
+		if(displayNameLong==null)throw new AssertionError("displayNameLong==null");
 		this.displayNameLong = displayNameLong;
+		this.library=lib;
+		this.folder=folder;
+		treeNodes=new ArrayList<TreeNode>();
+		convertGenealangLibraryToTreeNodes();
+	}
+
+	private void convertGenealangLibraryToTreeNodes() {
+		for()
+		
+		// GTD Auto-generated method stub
+		GTD.gtd();
 	}
 
 	@Override
@@ -25,14 +46,12 @@ public class GenealangLibraryLinkImpl extends SphereImpl implements GenealangLib
 
 	@Override
 	public TreeNode getChildAt(int childIndex) {
-		// GTD Auto-generated method stub
-		return null;
+		return childItems.get(childIndex);
 	}
 
 	@Override
 	public int getChildCount() {
-		// GTD Auto-generated method stub
-		return 0;
+		return childItems.size();
 	}
 
 	@Override

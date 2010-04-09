@@ -19,35 +19,51 @@ import egp.sphere.model.Sphere;
 
 public class SphereLoader {
 	private static final int EOF_INT=-1;  
-	public static SphereLoader lowlevel_fromDotSphereFile(File file)throws IOException{
+	public static SphereLoader lowlevel_fromDotSphereFile(File file)throws IOException, SyntaxException{
 		FileInputStream fis=new FileInputStream(file);
 		BufferedInputStream bis=new BufferedInputStream(fis,64*1024);
 		Reader r=new InputStreamReader(bis);
-		return lowlevel_fromDotSphereFile(r,file.getAbsolutePath());
+		BufferedReader r2=new BufferedReader(r,64*1024);
+		return lowlevel_fromDotSphereFile(r2,file.getAbsolutePath());
 	}
 	public Sphere get(){
 		return sphere;
 	}
 	private Sphere sphere;
 	private void gettok() throws IOException{
-		int ch;
-		token[0]=ch=br.read();
-		switch(ch){
-		case '\r':
-			break;
-		case '\n':
-			break;
-		}
+//		int ch;
+		token=
+//			ch=
+				br.read();
+//		column=column.add(ONE);
+//		switch(ch){
+//		case '\r':
+//		case '\n':
+//			break;
+//		}
 	}
+	private static final BigInteger ZERO=new BigInteger("0");
+	private static final BigInteger ONE=new BigInteger("1");
 	private void ws() throws IOException{
 		while(true){
-			switch(token[0]){
+			switch(token){
 			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
+				column=column.add(ONE);
 				gettok();
 				continue;
+			case '\t':
+//				while(!column.mod(EIGHT).equals(ZERO))column=column.add(ONE);
+				column=column.add(ONE);
+				gettok();
+				continue;
+			case '\r':
+			case '\n':
+				column=ONE;
+				line=line.add(ONE);
+				gettok();
+				continue;
+			default:
+				break;
 			}
 			break;
 		}
@@ -55,19 +71,39 @@ public class SphereLoader {
 	private void wsAndComments() throws IOException{
 		while(true){
 			ws();
-//			if(token[0]==';'){
-//				gettok();//skip character `;'
-//				br.readLine();
-//				gettok();//take first character in the next line
-//				continue;
-//			}
+			if(token==';'){
+				gettok();//skip character `;'
+				br.readLine();
+				token=' ';
+				column=ZERO;
+				line=line.add(ONE);
+				continue;
+			}
 			break;
 		}
 	}
 	private void expect(int chExpected, String chDisplayName) throws IOException, SyntaxException{
 		if(token!=chExpected)
-			throw new SyntaxException("Character \""+chDisplayName+"\" (`"+chExpected+"') expected, but found: `"+token+"'.");
-		if(chExpected!=EOF_INT)if(token!=EOF_INT)gettok();
+			throw new SyntaxException("Character \""+chDisplayName+"\" {"+
+					char2charStringDisplayNameRepresentation(chExpected)+"} expected, but found: {"+
+					char2charStringDisplayNameRepresentation(token)+"}.");
+		if(chExpected!=EOF_INT)if(token!=EOF_INT){
+			switch(token){
+			case '\r':
+			case '\n':
+				line=line.add(ONE);
+				column=ONE;
+				break;
+			default:
+				column=column.add(ONE);
+				break;
+			}
+			gettok();
+		}
+	}
+	private static String char2charStringDisplayNameRepresentation(int ch){
+		if(ch==EOF_INT)return "EOF";
+		return "'"+(char)ch+"', (char)"+ch;
 	}
 	public class SyntaxException extends Exception{
 		private String nameOfFrom;
@@ -108,17 +144,17 @@ public class SphereLoader {
 		
 	    public String getMessage() {
 	        return super.getMessage()+
-	        	" From: \""+nameOfSomethingThatWeAreReadingFrom+
-	        	"\", line: "+line+
-	        	", column: "+column+
+	        	" From: \""+getNameOfFrom()+
+	        	"\", line: "+getLine()+
+	        	", column: "+getColumn()+
 	        	".";
 	    }
 	}
-	private final int token=EOF_INT;
+	private int token=EOF_INT;
 	private final BufferedReader br;
 	private final String nameOfSomethingThatWeAreReadingFrom;
-	private final BigInteger line=new BigInteger("0");
-	private final BigInteger column=new BigInteger("0");
+	private BigInteger line=ONE;
+	private BigInteger column=ONE;
 	
 	private SphereLoader(BufferedReader br, String nameOfSomethingThatWeAreReadingFrom) throws IOException, SyntaxException {
 		super();
@@ -126,13 +162,22 @@ public class SphereLoader {
 		this.nameOfSomethingThatWeAreReadingFrom = nameOfSomethingThatWeAreReadingFrom;
 		gettok();//take the first character in the reader
 		sphere=sphere();
-		expect(EOF_INT, "End of stream");//GTD think about circular streams: like ones on the neck
+		expect(EOF_INT, "End of stream");//TODO think about circular streams: like ones on the neck
+	}
+	public String getNameOfFrom() {
+		return nameOfSomethingThatWeAreReadingFrom;
+	}
+	public BigInteger getCurrentColumn() {
+		return line;
+	}
+	public BigInteger getCurrentLine() {
+		return column;
 	}
 	private Sphere sphere() throws IOException, SyntaxException{//TODO we handle closed worlds not emitting energy, think about how we can handle other worlds
 		wsAndComments();
 		expect('(', "Left round bracket");
 		List<Sphere> items=new LinkedList<Sphere>();
-		while(token[0]!=')'&&token[0]!=EOF_INT){
+		while(token!=')'&&token!=EOF_INT){
 			items.add(item());
 			wsAndComments();
 		}
@@ -141,7 +186,7 @@ public class SphereLoader {
 		return new SphereImpl(items);
 	}
 	private Sphere item() throws IOException, SyntaxException {
-		switch(token[0]){
+		switch(token){
 		case '(': return sphere();
 		case ' ':
 		case '\n':
@@ -155,21 +200,20 @@ public class SphereLoader {
 		StringBuilder sb=new StringBuilder();
 		character_loop:
 		while(true){
-			switch(token[0]){
-			case ' ':
+			switch(token){
 			case '\n':
 			case '\r':
+			case ' ':
 			case '\t':
 			case EOF_INT:
+			case ')':
 				break character_loop;
 			}
-			sb.append((char)token[0]);
+			column=column.add(ONE);
+			sb.append((char)token);
 			gettok();
 		}
 		return new WordSphereImpl(sb.toString());
-	}
-	public static SphereLoader lowlevel_fromDotSphereFile(Reader r, String nameOfSomethingThatWeAreReadingFrom)throws IOException{
-		return lowlevel_fromDotSphereFile(new BufferedReader(r,64*1024), nameOfSomethingThatWeAreReadingFrom)
 	}
 	public static SphereLoader lowlevel_fromDotSphereFile(BufferedReader br, String nameOfSomethingThatWeAreReadingFrom)throws IOException, SyntaxException{
 		return new SphereLoader(br, nameOfSomethingThatWeAreReadingFrom);

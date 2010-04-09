@@ -12,9 +12,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -30,7 +30,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -38,56 +37,139 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 
 import sun.swing.DefaultLookup;
 import egp.genealang.i18n.I18n;
 import egp.genealang.infra.NamedVersionedCaller;
 import egp.genealang.proxy.GenealangLibraryLink;
 import egp.genealang.proxy.GenealangProxy;
+import egp.genealang.proxy.GenealangProxy.BadLibraryStructureException;
 import egp.genealang.proxy.impl.GenealangProxyImpl;
 import egp.genealang.util.ExceptionUtil;
 import egp.genealang.util.MsgBoxUtil;
 import egp.genealang.util.ScreenBoundsUtil;
+import egp.sphere.loader.SphereLoader.SyntaxException;
 
 public class SwingConsole extends JFrame implements NamedVersionedCaller{
-	private final class LibraryRootTreeNode implements TreeNode {
-		@Override
-		public boolean isLeaf() {
-			return false;
+	private final class RefreshButtonAbstractAction1 extends
+			AbstractAction {
+		private RefreshButtonAbstractAction1(String name) {
+			super(name);
 		}
 
 		@Override
-		public TreeNode getParent() {
-			return null;
+		public void actionPerformed(ActionEvent e) {
+			try {
+				libraryContentsTree
+						.libraryContentsRefreshButtonActionPerformed();
+			} catch (Throwable e2) {
+				ExceptionUtil.handleException(nvc, e2);
+			}
 		}
+	}
+	private final class DefaultListCellRenderer1 extends
+			DefaultListCellRenderer {
+		private static final long serialVersionUID = 3286606344832032396L;
 
-		@Override
-		public int getIndex(TreeNode node) {
-			return 0;
-		}
+		public Component getListCellRendererComponent(
+		        JList list,
+			Object value,
+		        int index,
+		        boolean isSelected,
+		        boolean cellHasFocus)
+		    {
+		        setComponentOrientation(list.getComponentOrientation());
 
-		String getTreeDisplayName(){
-			return currentlySelectedLibraryLink==null?"":currentlySelectedLibraryLink.getDisplayNameLong(proxy);
-		}
-		@Override
-		public int getChildCount() {
-			return currentlySelectedLibraryLink==null?0:currentlySelectedLibraryLink.getChildCount();
-		}
+		        Color bg = null;
+		        Color fg = null;
 
-		@Override
-		public TreeNode getChildAt(int childIndex) {
-			return currentlySelectedLibraryLink==null?null:currentlySelectedLibraryLink.getChildAt(childIndex);
-		}
+		        JList.DropLocation dropLocation = list.getDropLocation();
+		        if (dropLocation != null
+		                && !dropLocation.isInsert()
+		                && dropLocation.getIndex() == index) {
 
-		@Override
-		public boolean getAllowsChildren() {
-			return true;
-		}
+		            bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
+		            fg = DefaultLookup.getColor(this, ui, "List.dropCellForeground");
 
+		            isSelected = true;
+		        }
+
+			if (isSelected) {
+		            setBackground(bg == null ? list.getSelectionBackground() : bg);
+			    setForeground(fg == null ? list.getSelectionForeground() : fg);
+			}
+			else {
+			    setBackground(list.getBackground());
+			    setForeground(list.getForeground());
+			}
+		        
+			if (value instanceof GenealangLibraryLink) {
+			    setIcon(null);
+			    GenealangLibraryLink link=(GenealangLibraryLink) value;
+			    setText(getGenealangLibraryDisplayName(link));
+			}
+			else
+		    	if (value instanceof Icon) {
+		    	    setIcon((Icon)value);
+		    	    setText("");
+		    	}
+		    	else
+			{
+			    setIcon(null);
+			    setText((value == null) ? "" : value.toString());
+			}
+
+			setEnabled(list.isEnabled());
+			setFont(list.getFont());
+		        
+		        Border border = null;
+		        if (cellHasFocus) {
+		            if (isSelected) {
+		                border = DefaultLookup.getBorder(this, ui, "List.focusSelectedCellHighlightBorder");
+		            }
+		            if (border == null) {
+		                border = DefaultLookup.getBorder(this, ui, "List.focusCellHighlightBorder");
+		            }
+		        } else {
+		            border = getNoFocusBorder();
+		        }
+			setBorder(border);
+
+			return this;
+		    }
+
+		private Border getNoFocusBorder() {
+		    Border border = DefaultLookup.getBorder(this, ui, "List.cellNoFocusBorder");
+		    if (System.getSecurityManager() != null) {
+		        if (border != null) return border;
+		        return SAFE_NO_FOCUS_BORDER;
+		    } else {
+		        if (border != null &&
+		                (noFocusBorder == null ||
+		                noFocusBorder == DEFAULT_NO_FOCUS_BORDER)) {
+		            return border;
+		        }
+		        return noFocusBorder;
+		    }
+		}
+	}
+	private final class ListSelectionListener1 implements ListSelectionListener {
 		@Override
-		public Enumeration<TreeNode> children() {
-			return currentlySelectedLibraryLink==null?null:currentlySelectedLibraryLink.getChildren();
+		public void valueChanged(ListSelectionEvent e) {
+			try{
+//					if(e.getFirstIndex() != e.getLastIndex()){
+//						System.out.println("e.getFirstIndex() != e.getLastIndex(): "+e.getFirstIndex()+" != "+e.getLastIndex()+"\n"+e);
+//						return;
+//					}
+////						throw new AssertionError();
+				int index=foldersList.getSelectedIndex();
+				GenealangLibraryLink link=genealangFolderLinks.get(index);
+				currentlySelectedLibraryLink=link;
+				libraryTreeModel.nodeStructureChanged(libraryTreeRootNode);
+				refreshLibraryName();
+			}catch(Throwable tr){
+				ExceptionUtil.handleException(nvc, tr);
+			}
 		}
 	}
 	private static final long serialVersionUID = -9073324859042990633L;
@@ -105,10 +187,9 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 		
 	};
 	private static String getVersionString(){return "0";}  
-	private static ResourceBundle i18n=I18n.getBundle(SwingConsole.class.getName());
-	private JPanel mainComponent=new JPanel();
-	private JSplitPane mainSplitter=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-	private JPanel mainToolbar=new JPanel();
+	static ResourceBundle i18n=I18n.getBundle(SwingConsole.class.getName());
+	private JPanel mainComponent;
+	private JPanel mainToolbar;
 	private JButton loadFolderButton=new JButton(new AbstractAction(i18n.getString("load.genealang.folder")){
 		private static final long serialVersionUID = 5087613065301020079L;
 
@@ -121,53 +202,25 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 			}
 		}
 	});
-	private JPanel mainSplitter_LeftPane=new JPanel();
-	private JScrollPane mainSplitter_LeftScroller=new JScrollPane(mainSplitter_LeftPane);
-	private JPanel foldersPane=new JPanel();
+	private JPanel foldersPane;
 
-	private final GenealangProxy proxy=new GenealangProxyImpl();
+	final GenealangProxy proxy=new GenealangProxyImpl();
 	private final List<GenealangLibraryLink> genealangFolderLinks=new ArrayList<GenealangLibraryLink>();
 	private DefaultListModel foldersListModel=new DefaultListModel();	
 	private JList foldersList=new JList(foldersListModel);
 	
-	private GenealangLibraryLink currentlySelectedLibraryLink;
-	private TreeNode libraryTreeRootNode=new LibraryRootTreeNode();
+	GenealangLibraryLink currentlySelectedLibraryLink;
+	private LibraryRootTreeNode libraryTreeRootNode=new LibraryRootTreeNode(this);
 	private DefaultTreeModel libraryTreeModel=new DefaultTreeModel(libraryTreeRootNode);
-	private JPanel libraryPane=new JPanel();
-	private JTree libraryContentsTree=new JTree(libraryTreeModel){
-	    /**
-	     * Called by the renderers to convert the specified value to
-	     * text. This implementation returns <code>value.toString</code>, ignoring
-	     * all other arguments. To control the conversion, subclass this 
-	     * method and use any of the arguments you need.
-	     * 
-	     * @param value the <code>Object</code> to convert to text
-	     * @param selected true if the node is selected
-	     * @param expanded true if the node is expanded
-	     * @param leaf  true if the node is a leaf node
-	     * @param row  an integer specifying the node's display row, where 0 is 
-	     *             the first row in the display
-	     * @param hasFocus true if the node has the focus
-	     * @return the <code>String</code> representation of the node's value
-	     */
-	    public String convertValueToText(Object value, boolean selected,
-	                                     boolean expanded, boolean leaf, int row,
-	                                     boolean hasFocus) {
-	        if(value != null) {
-	        	String sValue = null;
-	        	if (value instanceof LibraryRootTreeNode){
-	        		LibraryRootTreeNode tn=(LibraryRootTreeNode) value;
-	        		sValue=tn.getTreeDisplayName();
-	        	}else
-	        		sValue = value.toString();
-	            if (sValue != null) {
-	                return sValue;
-	            }
-	        }
-	        return "";
-	    }
-	};
+	private JPanel libraryPane;
+	private LibraryContentsTree libraryContentsTree=new LibraryContentsTree(this, libraryTreeModel);
 	private JScrollPane libraryContentsScroller=new JScrollPane(libraryContentsTree);
+	private JPanel libraryContentsToolbar;
+	private JButton libraryContentsRefreshButton;
+	private JPanel libraryPaneNested;
+	private JLabel libraryNameLabel;
+	private JSplitPane splitter1;
+	private JPanel foldersNestedPane;
 	
 	{
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -186,133 +239,50 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 		});
 		setExtendedState(MAXIMIZED_BOTH);
 		setBounds(ScreenBoundsUtil.getScreenBounds());
-		mainComponent.setLayout(new BorderLayout());
-		mainComponent.add(mainSplitter, BorderLayout.CENTER);
-		mainSplitter.setDividerLocation(400);
-		mainComponent.add(mainToolbar, BorderLayout.NORTH);
+		mainComponent=new JPanel(new BorderLayout());
+		mainToolbar=new JPanel();
+		foldersPane=new JPanel(new BorderLayout());
+		libraryPane=new JPanel(new BorderLayout());
+		splitter1=new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, foldersPane, libraryPane);
+		splitter1.setDividerLocation(80);
+		mainComponent.add(splitter1,BorderLayout.CENTER);
+		
 		mainToolbar.setLayout(new FlowLayout(FlowLayout.LEFT));
 		mainToolbar.add(loadFolderButton);
-		mainSplitter.setLeftComponent(mainSplitter_LeftScroller);
-		mainSplitter_LeftPane.setLayout(new GridLayout(2, 1));
-		mainSplitter_LeftPane.add(foldersPane);
-		foldersPane.setLayout(new BorderLayout());
+		
 		foldersPane.add(new JLabel(i18n.getString("genealang.libraries")), BorderLayout.NORTH);
-		foldersPane.add(foldersList, BorderLayout.CENTER);
-		mainSplitter_LeftPane.add(libraryPane);
-		libraryPane.setLayout(new BorderLayout());
-		libraryPane.add(new JLabel(i18n.getString("library.pane.label")),BorderLayout.NORTH);
-		libraryPane.add(libraryContentsScroller,BorderLayout.CENTER);
+		foldersNestedPane=new JPanel(new BorderLayout());
+		foldersPane.add(foldersNestedPane, BorderLayout.CENTER);
+		foldersNestedPane.add(mainToolbar, BorderLayout.NORTH);
+		foldersNestedPane.add(foldersList, BorderLayout.CENTER);
+		
+		libraryNameLabel = new JLabel();
+		libraryPane.add(libraryNameLabel,BorderLayout.NORTH);
+		libraryPaneNested=new JPanel(new BorderLayout());
+		libraryPane.add(libraryPaneNested,BorderLayout.CENTER);
+		libraryContentsToolbar=new JPanel(new FlowLayout(FlowLayout.LEFT));
+		libraryPaneNested.add(libraryContentsToolbar,BorderLayout.NORTH);
+		libraryPaneNested.add(libraryContentsScroller,BorderLayout.CENTER);
+		libraryContentsRefreshButton=new JButton(new RefreshButtonAbstractAction1(i18n.getString("libraryContentsRefreshButton.name")));
+		refreshLibraryName();
+		libraryContentsToolbar.add(libraryContentsRefreshButton);
 		
 		foldersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		foldersList.addListSelectionListener(new ListSelectionListener() {
-			
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				try{
-//					if(e.getFirstIndex() != e.getLastIndex()){
-//						System.out.println("e.getFirstIndex() != e.getLastIndex(): "+e.getFirstIndex()+" != "+e.getLastIndex()+"\n"+e);
-//						return;
-//					}
-////						throw new AssertionError();
-					int index=foldersList.getSelectedIndex();
-					GenealangLibraryLink link=genealangFolderLinks.get(index);
-					currentlySelectedLibraryLink=link;
-					libraryTreeModel.nodeStructureChanged(libraryTreeRootNode);
-				}catch(Throwable tr){
-					ExceptionUtil.handleException(nvc, tr);
-				}
-			}
-		});
+		foldersList.addListSelectionListener(new ListSelectionListener1());
 		
 //		libraryContentsTree.setCellRenderer(new DefaultTreeCellRenderer(){
 //			private static final long serialVersionUID = -7048559298173704678L;
 //			
 //		});
 
-		foldersList.setCellRenderer(new DefaultListCellRenderer(){
-			private static final long serialVersionUID = 3286606344832032396L;
-			public Component getListCellRendererComponent(
-		            JList list,
-		    	Object value,
-		            int index,
-		            boolean isSelected,
-		            boolean cellHasFocus)
-		        {
-		            setComponentOrientation(list.getComponentOrientation());
-
-		            Color bg = null;
-		            Color fg = null;
-
-		            JList.DropLocation dropLocation = list.getDropLocation();
-		            if (dropLocation != null
-		                    && !dropLocation.isInsert()
-		                    && dropLocation.getIndex() == index) {
-
-		                bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
-		                fg = DefaultLookup.getColor(this, ui, "List.dropCellForeground");
-
-		                isSelected = true;
-		            }
-
-		    	if (isSelected) {
-		                setBackground(bg == null ? list.getSelectionBackground() : bg);
-		    	    setForeground(fg == null ? list.getSelectionForeground() : fg);
-		    	}
-		    	else {
-		    	    setBackground(list.getBackground());
-		    	    setForeground(list.getForeground());
-		    	}
-		            
-		    	if (value instanceof GenealangLibraryLink) {
-		    	    setIcon(null);
-		    	    GenealangLibraryLink link=(GenealangLibraryLink) value;
-		    	    setText(getGenealangLibraryDisplayName(link));
-		    	}
-		    	else
-			    	if (value instanceof Icon) {
-			    	    setIcon((Icon)value);
-			    	    setText("");
-			    	}
-			    	else
-		    	{
-		    	    setIcon(null);
-		    	    setText((value == null) ? "" : value.toString());
-		    	}
-
-		    	setEnabled(list.isEnabled());
-		    	setFont(list.getFont());
-		            
-		            Border border = null;
-		            if (cellHasFocus) {
-		                if (isSelected) {
-		                    border = DefaultLookup.getBorder(this, ui, "List.focusSelectedCellHighlightBorder");
-		                }
-		                if (border == null) {
-		                    border = DefaultLookup.getBorder(this, ui, "List.focusCellHighlightBorder");
-		                }
-		            } else {
-		                border = getNoFocusBorder();
-		            }
-		    	setBorder(border);
-
-		    	return this;
-		        }
-		    private Border getNoFocusBorder() {
-		        Border border = DefaultLookup.getBorder(this, ui, "List.cellNoFocusBorder");
-		        if (System.getSecurityManager() != null) {
-		            if (border != null) return border;
-		            return SAFE_NO_FOCUS_BORDER;
-		        } else {
-		            if (border != null &&
-		                    (noFocusBorder == null ||
-		                    noFocusBorder == DEFAULT_NO_FOCUS_BORDER)) {
-		                return border;
-		            }
-		            return noFocusBorder;
-		        }
-		    }
-
-		});
+		foldersList.setCellRenderer(new DefaultListCellRenderer1());
+		
+//		libraryContentsTree.setShowsRootHandles(false);
+	}
+	void refreshLibraryName() {
+		libraryNameLabel.setText(new MessageFormat(
+				i18n.getString("library.name.label.format")
+			).format(new Object[]{libraryTreeRootNode.getLibraryDisplayName()}));
 	}
 	public SwingConsole() throws HeadlessException {
 		super();
@@ -321,7 +291,7 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(getMainComponent(), BorderLayout.CENTER);
 	}
-	protected void loadGenealogyFolder() {
+	protected void loadGenealogyFolder() throws IOException, SyntaxException, BadLibraryStructureException {
 		FileDialog fd=new FileDialog(this,i18n.getString("filedialog.load.genealang.folder.title"),FileDialog.LOAD);
 		fd.setModal(true);
 		fd.setBounds(ScreenBoundsUtil.getScreenBounds());
