@@ -3,9 +3,9 @@ package egp.sphere.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import egp.sphere.model.LabelNotFoundException;
 import egp.sphere.model.Sphere;
 import egp.sphere.model.WordSphere;
-import egp.sphere.model.Sphere.LabelNotFoundException;
 
 public class WordSphereImpl implements WordSphere {
 	private final String fullQuote;

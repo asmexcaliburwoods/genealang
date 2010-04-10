@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -35,16 +34,15 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 
 import sun.swing.DefaultLookup;
 import egp.genealang.i18n.I18n;
 import egp.genealang.infra.NamedVersionedCaller;
-import egp.genealang.proxy.GenealangLibraryLink;
-import egp.genealang.proxy.GenealangProxy;
-import egp.genealang.proxy.GenealangProxy.BadLibraryStructureException;
-import egp.genealang.proxy.impl.GenealangProxyImpl;
+import egp.genealang.libtreenodeimpl.BadLibraryStructureException;
+import egp.genealang.libtreenodeimpl.GenealangShelfTreeNodeImpl;
+import egp.genealang.model.GenealangShelf;
+import egp.genealang.model.impl.GenealangShelfImplLoader;
 import egp.genealang.util.ExceptionUtil;
 import egp.genealang.util.MsgBoxUtil;
 import egp.genealang.util.ScreenBoundsUtil;
@@ -53,6 +51,8 @@ import egp.sphere.loader.SphereLoader.SyntaxException;
 public class SwingConsole extends JFrame implements NamedVersionedCaller{
 	private final class RefreshButtonAbstractAction1 extends
 			AbstractAction {
+		private static final long serialVersionUID = 6397957628823787511L;
+
 		private RefreshButtonAbstractAction1(String name) {
 			super(name);
 		}
@@ -103,9 +103,9 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 			    setForeground(list.getForeground());
 			}
 		        
-			if (value instanceof GenealangLibraryLink) {
+			if (value instanceof GenealangShelfTreeNodeImpl) {
 			    setIcon(null);
-			    GenealangLibraryLink link=(GenealangLibraryLink) value;
+			    GenealangShelfTreeNodeImpl link=(GenealangShelfTreeNodeImpl) value;
 			    setText(getGenealangLibraryDisplayName(link));
 			}
 			else
@@ -163,7 +163,7 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 //					}
 ////						throw new AssertionError();
 				int index=foldersList.getSelectedIndex();
-				GenealangLibraryLink link=genealangFolderLinks.get(index);
+				GenealangShelfTreeNodeImpl link=genealangFolderLinks.get(index);
 				currentlySelectedLibraryLink=link;
 				libraryTreeModel.nodeStructureChanged(libraryTreeRootNode);
 				refreshLibraryName();
@@ -204,12 +204,11 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 	});
 	private JPanel foldersPane;
 
-	final GenealangProxy proxy=new GenealangProxyImpl();
-	private final List<GenealangLibraryLink> genealangFolderLinks=new ArrayList<GenealangLibraryLink>();
+	private final List<GenealangShelfTreeNodeImpl> genealangFolderLinks=new ArrayList<GenealangShelfTreeNodeImpl>();
 	private DefaultListModel foldersListModel=new DefaultListModel();	
 	private JList foldersList=new JList(foldersListModel);
 	
-	GenealangLibraryLink currentlySelectedLibraryLink;
+	GenealangShelfTreeNodeImpl currentlySelectedLibraryLink;
 	private LibraryRootTreeNode libraryTreeRootNode=new LibraryRootTreeNode(this);
 	private DefaultTreeModel libraryTreeModel=new DefaultTreeModel(libraryTreeRootNode);
 	private JPanel libraryPane;
@@ -291,7 +290,7 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(getMainComponent(), BorderLayout.CENTER);
 	}
-	protected void loadGenealogyFolder() throws IOException, SyntaxException, BadLibraryStructureException {
+	protected void loadGenealogyFolder() throws Exception {
 		FileDialog fd=new FileDialog(this,i18n.getString("filedialog.load.genealang.folder.title"),FileDialog.LOAD);
 		fd.setModal(true);
 		fd.setBounds(ScreenBoundsUtil.getScreenBounds());
@@ -307,8 +306,10 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 			return;
 		}
 		File dir=new File(s);
-		//GTD show progress and allow to pause and cancel loading of genealang folders
-		GenealangLibraryLink link=proxy.getGenealangLibraryLink(this,dir);
+		//GTD show progress and allow to pause and cancel loading of genealangbook shelves
+		GenealangShelfImplLoader loader=new GenealangShelfImplLoader();
+		GenealangShelf gf=loader.load(nvc, dir);
+		GenealangShelfTreeNodeImpl link=new GenealangShelfTreeNodeImpl(nvc, gf, libraryTreeRootNode);
 		genealangFolderLinks.add(link);
 		foldersListModel.addElement(link);
 		foldersList.setSelectedIndex(genealangFolderLinks.size()-1);
@@ -340,8 +341,8 @@ public class SwingConsole extends JFrame implements NamedVersionedCaller{
 		return nvc.versionString();
 	}
 	
-	private String getGenealangLibraryDisplayName(GenealangLibraryLink link){
-		return proxy.getGenealangLibraryDisplayName(link);
+	private String getGenealangLibraryDisplayName(GenealangShelfTreeNodeImpl link){
+		return link.getDisplayName();
 	}
     private static final Border SAFE_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
     private static final Border DEFAULT_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);

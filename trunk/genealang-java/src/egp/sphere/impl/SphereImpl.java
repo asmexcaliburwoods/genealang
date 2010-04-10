@@ -5,9 +5,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import egp.sphere.model.DuplicateLabelFoundException;
+import egp.sphere.model.LabelNotFoundException;
 import egp.sphere.model.Sphere;
 import egp.sphere.model.WordSphere;
-import egp.sphere.model.Sphere.DuplicateLabelFoundException;
 import gtd.GTD;
 
 public class SphereImpl implements Sphere {
@@ -29,8 +30,8 @@ public class SphereImpl implements Sphere {
 	@Override
 	public Sphere getUniqueSphereLabeled(String label) throws LabelNotFoundException, DuplicateLabelFoundException {
 		List<Sphere> spheresMatchingGivenLabel=getRecursivelyAllSpheresLabeled(label);
-		if(spheresMatchingGivenLabel.isEmpty())throw new LabelNotFoundException();
-		if(spheresMatchingGivenLabel.size()>=2)throw new DuplicateLabelFoundException();
+		if(spheresMatchingGivenLabel.isEmpty())throw new LabelNotFoundException(label);
+		if(spheresMatchingGivenLabel.size()>=2)throw new DuplicateLabelFoundException(label);
 		if(spheresMatchingGivenLabel.size()!=1)throw new AssertionError();
 		return spheresMatchingGivenLabel.get(0);
 	}
@@ -61,6 +62,7 @@ public class SphereImpl implements Sphere {
 	@Override
 	public List<Sphere> getRecursivelyAllSpheresLabeled(String label) {
 		List<Sphere> spheresMatchingGivenLabel=new LinkedList<Sphere>();
+		if(items.size()==0)return spheresMatchingGivenLabel;
 		//if this sphere matches, add it 
 		Sphere sphere1=items.get(0);
 		if(sphere1 instanceof WordSphere){

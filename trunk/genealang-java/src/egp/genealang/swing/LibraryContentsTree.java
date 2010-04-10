@@ -18,6 +18,7 @@ final class LibraryContentsTree extends JTree {
 		super(newModel);
 		this.swingConsole = swingConsole;
 		setRootVisible(false);
+		setShowsRootHandles(true);
 	}
 
 	/**
