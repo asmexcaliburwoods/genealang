@@ -3,9 +3,9 @@ package egp.sphere.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import egp.sphere.model.LabelNotFoundException;
 import egp.sphere.model.NullSphere;
 import egp.sphere.model.Sphere;
-import egp.sphere.model.Sphere.LabelNotFoundException;
 
 public class NullSphereImpl implements NullSphere {
 	@Override

@@ -110,9 +110,9 @@ public class SphereLoader {
 		private BigInteger line;
 		private BigInteger column;
 		private void init() {
-			this.line = getCurrentLine();
-			this.column = getCurrentColumn();
-			this.nameOfFrom = getNameOfFrom();
+			SyntaxException.this.line = SphereLoader.this.getCurrentLine();
+			SyntaxException.this.column = SphereLoader.this.getCurrentColumn();
+			SyntaxException.this.nameOfFrom = SphereLoader.this.getNameOfFrom();
 		}
 		
 		public BigInteger getLine() {
@@ -168,10 +168,10 @@ public class SphereLoader {
 		return nameOfSomethingThatWeAreReadingFrom;
 	}
 	public BigInteger getCurrentColumn() {
-		return line;
+		return column;
 	}
 	public BigInteger getCurrentLine() {
-		return column;
+		return line;
 	}
 	private Sphere sphere() throws IOException, SyntaxException{//TODO we handle closed worlds not emitting energy, think about how we can handle other worlds
 		wsAndComments();
@@ -206,6 +206,7 @@ public class SphereLoader {
 			case ' ':
 			case '\t':
 			case EOF_INT:
+			case '(':
 			case ')':
 				break character_loop;
 			}

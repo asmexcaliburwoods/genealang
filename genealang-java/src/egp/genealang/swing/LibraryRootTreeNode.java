@@ -37,7 +37,7 @@ public final class LibraryRootTreeNode implements TreeNode {
 	}
 
 	String getTreeDisplayName(){
-		return this.swingConsole.currentlySelectedLibraryLink==null?SwingConsole.i18n.getString("unspecified"):this.swingConsole.currentlySelectedLibraryLink.getDisplayNameLong(this.swingConsole.proxy);
+		return this.swingConsole.currentlySelectedLibraryLink==null?SwingConsole.i18n.getString("unspecified"):this.swingConsole.currentlySelectedLibraryLink.getDisplayName();
 	}
 	@Override
 	public int getChildCount() {
@@ -56,7 +56,7 @@ public final class LibraryRootTreeNode implements TreeNode {
 
 	@Override
 	public Enumeration<TreeNode> children() {
-		return this.swingConsole.currentlySelectedLibraryLink==null?null:this.swingConsole.currentlySelectedLibraryLink.getChildren();
+		return this.swingConsole.currentlySelectedLibraryLink==null?null:this.swingConsole.currentlySelectedLibraryLink.children();
 	}
 
 	public String getLibraryDisplayName() {
