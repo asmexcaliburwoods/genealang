@@ -7,7 +7,7 @@ You can use `jstar` editor to edit `/etc/passwd` and `/etc/group` instead of `vi
 
 The following installs `jstar`:
 
-`sudo apt-get install joe`
+`sudo aptitude install joe`
 
 The following can be used to edit passwd and group:
 
