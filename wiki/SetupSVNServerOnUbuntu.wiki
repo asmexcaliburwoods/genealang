@@ -3,7 +3,7 @@
 
 Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My comments are:
 
-You can use `jstar` editor to edit `/etc/passwd` and `/etc/group` instead of `vipw` and `vigr`. jstar has a familiar Borland WordStar keyboard interface.
+You can use `jstar` editor to edit `/etc/passwd` and `/etc/group` instead of `vipw` and `vigr`. jstar has a familiar Borland `WordStar` keyboard interface.
 
 The following installs `jstar`:
 
