@@ -1,7 +1,7 @@
 #summary Setting up SVN server on Ubuntu Linux
 #labels svn
 
-Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My comments are:
+Described [http://www.subversionary.org/howto/setting-up-a-subversion-server-on-ubuntu-gutsy-gibbon-server here]. My (very rudimentary) comments are:
 
 You can use `jstar` editor to edit `/etc/passwd` and `/etc/group` instead of `vipw` and `vigr`. jstar has a familiar Borland `WordStar` keyboard interface.
 
