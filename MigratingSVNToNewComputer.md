@@ -1,0 +1,1 @@
+Described [here](http://sudocode.blogspot.com/2008/10/migrating-subversion-repository.html).
